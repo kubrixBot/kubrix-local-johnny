@@ -1,0 +1,53 @@
+backupStorageLocation:
+  config:
+    s3Url: https://sx-minio.minio.svc.cluster.local:9000
+    bucket: velero
+    region: minio
+    insecureSkipTLSVerify: true
+    # prefix
+velero:
+  nameOverride: velero #https://github.com/vmware-tanzu/velero/issues/9023
+  fullnameOverride: velero
+  initContainers:
+    - name: velero-plugin-for-aws
+      image: velero/velero-plugin-for-aws:v1.13.1
+      imagePullPolicy: IfNotPresent
+      volumeMounts:
+        - mountPath: /target
+          name: plugins
+    - name: kubevirt-velero-plugin
+      image: quay.io/kubevirt/kubevirt-velero-plugin:v0.8.0
+      imagePullPolicy: IfNotPresent
+      volumeMounts:
+        - mountPath: /target
+          name: plugins
+  metrics:
+    serviceMonitor:
+      enabled: true
+    nodeAgentPodMonitor:
+      enabled: true
+    prometheusRule:
+      enabled: true
+  crdjob:
+    resources:
+      requests:
+        cpu: 128m
+        memory: 128Mi
+      limits:
+        cpu: 128m
+        memory: 128Mi
+  configuration:
+    backupStorageLocation: []
+    volumeSnapshotLocation: []
+    features: EnableCSI
+    defaultVolumesToFsBackup: true
+  serviceAccount:
+    server:
+      create: true
+      name: velero
+  snapshotsEnabled: false
+  deployNodeAgent: true
+
+  kubectl:
+    image:
+      repository: ghcr.io/suxess-it/kubectl

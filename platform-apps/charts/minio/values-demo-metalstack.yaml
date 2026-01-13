@@ -1,0 +1,15 @@
+minio:
+  consoleIngress:
+    hosts:
+      - minio-console.demo.kubrix.cloud
+    tls: 
+      - secretName: minio-console-tls
+        hosts:
+          - minio-console.demo.kubrix.cloud
+  ingress:
+    hosts:
+      - minio.demo.kubrix.cloud
+    tls: 
+      - secretName: minio-server-tls
+        hosts:
+          - minio.demo.kubrix.cloud

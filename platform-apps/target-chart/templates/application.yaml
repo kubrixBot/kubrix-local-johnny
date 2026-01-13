@@ -1,0 +1,87 @@
+{{- range .Values.applications }}
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  {{- with .annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+  name: sx-{{ .name }}
+  namespace: argocd
+  finalizers:
+  - resources-finalizer.argocd.argoproj.io
+spec:
+  project: default
+  source:
+    repoURL: {{ $.Values.default.repoURL }}
+    targetRevision: {{ $.Values.default.targetRevision }}
+    path: platform-apps/charts/{{ .name }}
+    helm:
+      {{- with .helmOptions }}
+        {{- toYaml . | nindent 6 }}
+      {{- end }}
+      valueFiles:
+        {{- toYaml $.Values.default.valueFiles | nindent 6}}
+        {{- with .valueFiles }}
+        {{- toYaml . | nindent 6}}
+        {{- end }}
+      ignoreMissingValueFiles: true
+      parameters:
+        - name: kubriXPlan
+          value: {{ $.Values.kubriXPlan }}
+        - name: default.repoURL
+          value: {{ $.Values.default.repoURL }}
+        - name: default.targetRevision
+          value: {{ $.Values.default.targetRevision }}
+        - name: global.kubriXPlan
+          value: {{ $.Values.kubriXPlan }}
+        - name: global.repoURL
+          value: {{ $.Values.default.repoURL }}
+        - name: global.targetRevision
+          value: {{ $.Values.default.targetRevision }}
+  destination:
+    {{- if .destinationNamespaceOverwrite }}
+    namespace: {{ .destinationNamespaceOverwrite }}
+    {{- else }}
+    namespace: {{ .name }}
+    {{- end }}
+    server: 'https://kubernetes.default.svc'
+  syncPolicy:
+    {{- /*
+    # if namespaceResourceTracking=false we do not set any managedNamespaceMetadata,
+    #   even if '.managedNamespaceMetadata' attribute is set on the application object.
+    #   This is important for apps which share a namespace with an other app,
+    #   so that the namespace doesn't get deleted when the app gets deleted (e.g. 'team-onboarding' in namespace 'argocd')
+    */}}
+    {{- if or .namespaceResourceTracking (not (hasKey . "namespaceResourceTracking")) }}
+    {{- $nsMetadata := default (dict) .managedNamespaceMetadata }}
+    managedNamespaceMetadata:
+      annotations:
+    {{- /*
+        # explicitly set resource tracking annotations
+        #   even though an empty annotation would also work for namespace resource tracking
+        #   according to https://argo-cd.readthedocs.io/en/latest/user-guide/sync-options/#namespace-metadata)
+    */}}
+        argocd.argoproj.io/tracking-id: sx-{{ .name }}:app/Namespace:{{ .name }}/{{ .name }}
+        {{- with $nsMetadata.annotations }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+      {{- with $nsMetadata.labels }}
+      labels:
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+    {{- end }}
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+      {{- with .syncOptions }}
+        {{- toYaml . | nindent 6 }}
+      {{- end }}
+    {{- with .ignoreDifferences }}
+  ignoreDifferences:
+        {{- toYaml . | nindent 4 }}
+    {{- end }}
+---
+{{- end }}

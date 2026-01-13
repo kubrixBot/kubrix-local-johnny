@@ -1,0 +1,115 @@
+backstage:
+  ingress:
+    host: backstage.demo.kubrix.cloud
+  backstage:
+    appConfig:
+      app:
+        baseUrl: https://backstage.demo.kubrix.cloud
+
+      backend:
+        baseUrl: https://backstage.demo.kubrix.cloud
+        csp:
+          frame-src: ['*.demo.kubrix.cloud']
+        cors:
+          origin: https://backstage.demo.kubrix.cloud
+
+      proxy:
+        endpoints:
+          '/grafana/api':
+            target: https://grafana.demo.kubrix.cloud
+
+      argocd:
+        baseUrl: https://argocd.demo.kubrix.cloud
+        appLocatorMethods:
+          - type: 'config'
+            instances:
+              - name: kubrix
+                url: https://argocd.demo.kubrix.cloud
+                token: ${ARGOCD_AUTH_TOKEN}
+
+      auth:
+        providers:
+          oidc:
+            development:
+              callbackUrl: https://backstage.demo.kubrix.cloud/api/auth/oidc/handler/frame
+
+      explore:
+        tools:
+          - title: Announcements
+            description: Updates for your Employees
+            url: /announcement
+            image: /homepage/images/announcements.jpg
+            tags:
+              - Announcement
+              - Employee
+              - noHashtag
+          - title: Central Monitoring
+            description: Central Monitoring
+            url: https://grafana.demo.kubrix.cloud/
+            image: /homepage/images/monitoring.jpg
+            tags:
+              - Monitoring
+              - Observability
+          - title: GitOps CD
+            description: Discover kubriX GitOps CD
+            url: https://argocd.demo.kubrix.cloud/
+            image: /homepage/images/platforms.jpg
+            tags:
+              - GitOps
+              - CD
+              - argocd
+          - title: GitOps Promotion
+            description: orchestrate stage-to-stage deployments
+            url: https://kargo.demo.kubrix.cloud
+            image: /homepage/images/sdk.jpg
+            tags:
+              - kargo
+              - multistage
+              - promotion
+          - title: Thread Detection
+            description: Discover security threats in real time
+            url: https://falco.demo.kubrix.cloud
+            image: /homepage/images/infrastructure.jpg
+            tags:
+              - falco
+              - Threat Detection
+              - Regulatory Compliance
+          - title: IAM
+            description: Identity and Access Management
+            url: https://keycloak.demo.kubrix.cloud
+            image: /homepage/images/hubs.jpg
+            tags:
+              - keycloak
+              - sso
+          - title: Secret Management
+            description: Manage Secrets 
+            url: https://vault.demo.kubrix.cloud
+            image: /homepage/images/apps.jpg
+            tags:
+              - vault
+              - secrets
+      catalog:
+        locations:
+          - type: url
+            target: "{{ .Values.global.repoURL }}/blob/{{ .Values.global.targetRevision }}/backstage-resources/templates/showcase-templates-demo.yaml"
+            rules:
+              - allow: [Template]
+          - type: url
+            target: "{{ .Values.global.repoURL }}/blob/{{ .Values.global.targetRevision }}/backstage-resources/entities/all.yaml"
+          - type: url
+            target: "{{ .Values.global.repoURL }}/blob/{{ .Values.global.targetRevision }}/backstage-resources/entities/demo.yaml"
+
+      kubernetes:
+        customResources:
+          - group: 'kubevirt.io'
+            apiVersion: 'v1'
+            plural: 'virtualmachines'
+          - group: 'kubevirt.io'
+            apiVersion: 'v1'
+            plural: 'virtualmachineinstances'
+
+      grafana:
+        domain: https://grafana.demo.kubrix.cloud
+
+      kubecost:
+        baseUrl: https://kubecost.demo.kubrix.cloud/

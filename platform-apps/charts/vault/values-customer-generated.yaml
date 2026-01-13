@@ -1,0 +1,10 @@
+vault:
+  server:
+    ingress:
+      hosts:
+        - host: vault.127-0-0-1.nip.io
+          paths: []
+      tls: 
+        - secretName: vault-server-tls
+          hosts:
+            - vault.127-0-0-1.nip.io

@@ -1,0 +1,13 @@
+clusterType: kind
+cloudProvider: on-prem
+dnsProvider: none
+certManagerDnsProvider: none
+tShirtSize: small
+securityStrict: false
+haEnabled: false
+domain: 127-0-0-1.nip.io
+gitRepo: https://github.com/kubriX-demo/kubrix-local-johnny
+gitRepoOrg: kubriX-demo
+gitRepoName: kubrix-local-johnny
+gitUser: jkleinlercher
+metalLbIp:  

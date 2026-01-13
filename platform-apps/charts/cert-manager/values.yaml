@@ -1,0 +1,12 @@
+cert-manager:
+  installCRDs: true
+
+kindKubriXClusterIssuer:
+  enabled: false
+
+letsEncryptProdClusterIssuer:
+  enabled: false
+
+letsEncryptStagingClusterIssuer:
+  enabled: false
+

@@ -1,0 +1,438 @@
+# This is a basic workflow to help you get started with Actions
+
+name: kind
+
+# Controls when the workflow will run
+on:
+  # do a full cluster test in main branch and when opening or changing PRs
+  push:
+    branches: [ "main" ]
+    paths:
+      - '.github/workflows/cluster-test.yml'
+      - '.github/kind-config.yaml'
+      - 'e2e-tests/**'
+      - 'platform-apps/charts/**'
+      - 'platform-apps/target-chart/templates/**'
+      - 'platform-apps/target-chart/values.yaml'
+      - 'platform-apps/target-chart/values-kind*'
+      - 'Dockerfile'
+      - 'install-platform.sh'
+      - '.github/workflows/create-kubrix-installer-image.yml'
+      - '.github/install-kubriX-with-job.sh'
+      - 'install-manifests.yaml'
+  pull_request:
+    types: [opened, synchronize]
+    paths:
+      - '.github/workflows/cluster-test.yml'
+      - '.github/kind-config.yaml'
+      - 'e2e-tests/**'
+      - 'platform-apps/charts/**'
+      - 'platform-apps/target-chart/templates/**'
+      - 'platform-apps/target-chart/values.yaml'
+      - 'platform-apps/target-chart/values-kind*'
+      - 'Dockerfile'
+      - 'install-platform.sh'
+      - '.github/workflows/create-kubrix-installer-image.yml'
+      - '.github/install-kubriX-with-job.sh'
+      - 'install-manifests.yaml'
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
+  # Also run AFTER kubrix-installer build completes
+  workflow_run:
+    workflows: ['create kubrix-installer image']
+    types: [completed]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  KUBRIX_REPO_BRANCH: ${{ github.head_ref || github.ref_name }}
+  KUBRIX_REPO: "https://github.com/${{ github.repository }}"
+  
+jobs:
+  changes:
+    runs-on: ubuntu-latest
+    outputs:
+      dockerImageChanges: ${{ steps.filter.outputs.dockerImageChanges }}
+      globalChanges: ${{ steps.filter.outputs.globalChanges }}
+      targets: ${{ steps.select-targets.outputs.targets }}
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0  # needed so the action can diff properly
+      - id: filter
+        uses: dorny/paths-filter@v3
+        with:
+          list-files: json
+          # For PRs it compares base..head. For push it compares before..after.
+          filters: |
+            dockerImageChanges:
+              - 'Dockerfile'
+              - 'install-platform.sh'
+              - '.github/workflows/create-kubrix-installer-image.yml'
+            appChanges:
+              - 'platform-apps/charts/**'
+            globalChanges:
+               - '.github/workflows/cluster-test.yml'
+               - '.github/kind-config.yaml'
+               - 'e2e-tests/**'
+               - 'platform-apps/target-chart/templates/**'
+               - 'platform-apps/target-chart/values.yaml'
+               - 'platform-apps/target-chart/values-kind*'
+               - '.github/install-kubriX-with-job.sh'
+               - 'install-manifests.yaml'
+               - 'install-platform.sh'
+  
+      - id: build-matrix-global
+        name: Build global target matrix from changed files
+        if: steps.filter.outputs.globalChanges == 'true'
+        shell: bash
+        env:
+          CLUSTER_TEST_TARGET_TYPES: ${{ vars.CLUSTER_TEST_TARGET_TYPES }}
+        run: |
+          if [[ ${CLUSTER_TEST_TARGET_TYPES} == "" ]]; then
+            echo "targets=[]" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          declare -A TARGETS=()
+          for target in ${CLUSTER_TEST_TARGET_TYPES}; do
+            [[ -f "platform-apps/target-chart/values-$target.yaml" ]] || continue
+            TARGETS["$target"]=1
+          done
+          if ((${#TARGETS[@]})); then
+            TARGETS_JSON=$(printf '%s\n' "${!TARGETS[@]}" | jq -R . | jq -s -c .)
+          else
+            TARGETS_JSON='[]'
+          fi
+
+          echo "targets=$TARGETS_JSON" >> "$GITHUB_OUTPUT"
+
+
+      # Derive app names from changed paths and check which of target-types reference them
+      - id: build-matrix-app
+        name: Build app target matrix from changed files
+        if: steps.filter.outputs.appChanges == 'true' && steps.filter.outputs.globalChanges == 'false'
+        env:
+          CLUSTER_TEST_TARGET_TYPES: ${{ vars.CLUSTER_TEST_TARGET_TYPES }}
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          # Changed files matched by the filter (JSON array)
+          CHANGED_JSON='${{ steps.filter.outputs.appChanges_files }}'
+
+          # Extract unique app names from paths like platform-apps/<app>/...
+          mapfile -t CHANGED <<<"$(jq -r '.[]' <<<"$CHANGED_JSON")"
+          declare -A APPS=()
+          for f in "${CHANGED[@]}"; do
+            if [[ "$f" =~ ^platform-apps/charts/([^/]+)/ ]]; then
+              APPS["${BASH_REMATCH[1]}"]=1
+            fi
+          done
+
+          if [[ ${#APPS[@]} -eq 0 ]]; then
+            echo "No app directories changed."
+            echo "targets=[]" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          echo "Changed apps: ${!APPS[@]}"
+
+          # For any app that changed, see which of the 4 targets mention it
+          declare -A TARGETS=()
+          for app in "${!APPS[@]}"; do
+            for file in ${CLUSTER_TEST_TARGET_TYPES}; do
+              # Skip missing files quietly (useful for monorepos)
+              [[ -f "platform-apps/target-chart/values-$file.yaml" ]] || continue
+              if grep -q -- "$app" "platform-apps/target-chart/values-$file.yaml"; then
+                TARGETS["$file"]=1
+              fi
+            done
+          done
+
+          if ((${#TARGETS[@]})); then
+            TARGETS_JSON=$(printf '%s\n' "${!TARGETS[@]}" | jq -R . | jq -s -c .)
+          else
+            TARGETS_JSON='[]'
+          fi
+                   
+          echo "Will target files: $TARGETS_JSON"
+
+          # Expose as job output to feed a matrix
+          echo "targets=$TARGETS_JSON" >> "$GITHUB_OUTPUT"
+
+      - name: Select final targets
+        id: select-targets
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          global='${{ steps.build-matrix-global.outputs.targets }}'
+          app='${{ steps.build-matrix-app.outputs.targets }}'
+
+          # prefer global if it's non-empty JSON array and not '[]'
+          if [[ -n "$global" && "$global" != "null" ]]; then
+            printf "targets=%s\n" "$global"
+            printf "targets=%s\n" "$global" >> "$GITHUB_OUTPUT"
+          else
+            printf "targets=%s\n" "$app"
+            printf "targets=%s\n" "$app" >> "$GITHUB_OUTPUT"
+          fi
+
+  create-kubrix-installer-image:
+    # we check in each step with 
+    # if: ${{ needs.changes.outputs.dockerImageChanges == 'true' }}
+    # because checking it at job level skips the whole job
+    # and then prevents create-cluster job from running
+    needs: changes
+    if: ${{ github.repository == 'suxess-it/kubriX' || github.repository == 'suxess-it/kubriX-prime' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:         
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - uses: docker/setup-qemu-action@v3
+        if: ${{ needs.changes.outputs.dockerImageChanges == 'true' }}
+        
+      - uses: docker/setup-buildx-action@v3
+        if: ${{ needs.changes.outputs.dockerImageChanges == 'true' }}
+
+      - name: Docker meta
+        if: ${{ needs.changes.outputs.dockerImageChanges == 'true' }}
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: |
+            name=ghcr.io/suxess-it/kubrix-installer
+          tags: |
+            # set latest tag for default branch
+            type=raw,value=latest,enable={{is_default_branch}}
+            type=ref,event=branch
+            type=ref,event=tag
+            type=ref,event=pr
+
+      - name: Login to Github Container Registry
+        if: ${{ needs.changes.outputs.dockerImageChanges == 'true' }}
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Compute version
+        if: ${{ needs.changes.outputs.dockerImageChanges == 'true' }}
+        id: ver
+        run: |
+          echo "version=$(git describe --tags --dirty --always)" >> $GITHUB_OUTPUT
+          echo "sha_short=$(git rev-parse --short=12 HEAD)" >> $GITHUB_OUTPUT
+     
+      - name: Build and push docker
+        if: ${{ needs.changes.outputs.dockerImageChanges == 'true' }}
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: true
+          platforms: linux/amd64, linux/arm64
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          build-args: |
+            VERSION=${{ steps.ver.outputs.version }}
+            VCS_REF=${{ steps.ver.outputs.sha_short }}
+          secrets: |
+            "KIND_KUBRIX_TLS_CRT_PEM=${{ secrets.KIND_KUBRIX_TLS_CRT_PEM }}"
+            "KIND_KUBRIX_TLS_KEY_PEM=${{ secrets.KIND_KUBRIX_TLS_KEY_PEM }}"
+  
+  create-cluster:
+    needs: 
+      - create-kubrix-installer-image
+      - changes
+    runs-on: ${{ vars.KUBRIX_GITHUB_RUNNER || 'ubuntu-latest' }}
+    if: ${{ needs.create-kubrix-installer-image.result == 'success' || needs.create-kubrix-installer-image.result == 'skipped' }}
+    permissions: read-all
+    strategy:
+      fail-fast: false
+      matrix:
+        target-type: ${{ fromJson(needs.changes.outputs.targets) }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      # free disk space, otherwise we often end with "no space left on device" during testkube tests
+      - name: Free Disk Space (Ubuntu)
+        uses: jlumbroso/free-disk-space@main
+      
+      - name: Create k8s Kind Cluster
+        uses: helm/kind-action@v1.13.0
+        with:
+          cluster_name: kubrix-cluster
+          config: ${{ github.workspace }}/.github/kind-config.yaml
+          
+      - name: install mkcert
+        shell: bash
+        run: |
+          curl -JLO "https://dl.filippo.io/mkcert/latest?for=linux/amd64"
+          chmod +x mkcert-v*-linux-amd64
+          sudo cp mkcert-v*-linux-amd64 /usr/local/bin/mkcert
+    
+      - name: install k8sgpt
+        shell: bash
+        run: |
+          curl -LO https://github.com/k8sgpt-ai/k8sgpt/releases/download/v0.4.25/k8sgpt_amd64.deb
+          sudo dpkg -i k8sgpt_amd64.deb
+          k8sgpt analyze
+
+      - name: install kubriX stack
+        env:
+          KUBRIX_TARGET_TYPE: ${{ matrix.target-type }}
+          KUBRIX_CLUSTER_TYPE: "kind"
+          KUBRIX_BACKSTAGE_GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          KUBRIX_REPO_PASSWORD: ${{ secrets.GITHUB_TOKEN }}
+          KUBRIX_REPO_USERNAME: "dummy"
+          KUBRIX_INSTALL_DEBUG: "false"
+          KUBRIX_BOOTSTRAP_MAX_WAIT_TIME: ${{ vars.KUBRIX_BOOTSTRAP_MAX_WAIT_TIME }}
+          PR_NUMBER: "${{ needs.changes.outputs.dockerImageChanges == 'true' && github.event.number || '' }}"
+        shell: bash
+        run: |
+          kubectl create ns kubrix-install
+          kubectl create secret generic kubrix-install-secrets -n kubrix-install \
+            --from-literal KUBRIX_TARGET_TYPE=${KUBRIX_TARGET_TYPE} \
+            --from-literal KUBRIX_CLUSTER_TYPE=${KUBRIX_CLUSTER_TYPE} \
+            --from-literal KUBRIX_BACKSTAGE_GITHUB_TOKEN=${KUBRIX_BACKSTAGE_GITHUB_TOKEN} \
+            --from-literal KUBRIX_REPO_PASSWORD=${KUBRIX_REPO_PASSWORD} \
+            --from-literal KUBRIX_REPO_USERNAME=${KUBRIX_REPO_USERNAME} \
+            --from-literal KUBRIX_REPO_BRANCH=${KUBRIX_REPO_BRANCH} \
+            --from-literal KUBRIX_REPO=${KUBRIX_REPO} \
+            --from-literal KUBRIX_BOOTSTRAP_MAX_WAIT_TIME=${KUBRIX_BOOTSTRAP_MAX_WAIT_TIME} \
+            --from-literal KUBRIX_INSTALLER=true
+          bash .github/install-kubriX-with-job.sh
+
+      - name: argocd show diff
+        continue-on-error: true
+        if: always()
+        env:
+          KUBRIX_TARGET_TYPE: ${{ matrix.target-type }}
+        shell: bash
+        run: |
+          target_chart_values_file=platform-apps/target-chart/values-$(echo ${KUBRIX_TARGET_TYPE} | awk '{print tolower($0)}').yaml
+          argocd_apps=$(cat $target_chart_values_file | awk '/^  - name:/ { printf "%s", "sx-"$3" "}' )
+          curl -kL -o argocd https://argocd.127-0-0-1.nip.io/download/argocd-linux-amd64
+          chmod u+x argocd
+          ls -l
+          INITIAL_ARGOCD_PASSWORD=$( kubectl get secret -n argocd argocd-initial-admin-secret -o=jsonpath={'.data.password'} | base64 -d )
+          ./argocd login argocd.127-0-0-1.nip.io --grpc-web --insecure --username admin --password ${INITIAL_ARGOCD_PASSWORD}
+          for app in ${argocd_apps} ; do echo "$app diff" ; ./argocd app diff $app --grpc-web ; done         
+          
+      - name: kubectl get applications
+        if: always()
+        shell: bash
+        run: |
+          kubectl get applications -n argocd
+          kubectl get applications -n argocd -o yaml
+          
+      - name: analyze with k8sgpt
+        if: always()
+        shell: bash
+        run: |
+          k8sgpt analyze
+
+      - name: Update Vault with GitHub OAuth credentials for Testkube tests
+        if: ${{ matrix.target-type  == 'kind-portal' || matrix.target-type  == 'kind-hub-prime' }}
+        env:
+          GITHUB_CLIENTID: ${{ secrets.E2E_TEST_GITHUB_CLIENTID }}
+          GITHUB_CLIENTSECRET: ${{ secrets.E2E_TEST_GITHUB_CLIENTSECRET }}
+        run: |
+          export VAULT_HOSTNAME=$(kubectl get ingress -o jsonpath='{.items[*].spec.rules[*].host}' -n vault)
+          export VAULT_TOKEN=$(kubectl get secret -n vault vault-init -o=jsonpath='{.data.root_token}'  | base64 -d)
+          curl -k --header "X-Vault-Token:$VAULT_TOKEN" --request PATCH --header "Content-Type: application/merge-patch+json" --data "{\"data\": {\"GITHUB_CLIENTSECRET\": \"${GITHUB_CLIENTSECRET}\", \"GITHUB_CLIENTID\": \"${GITHUB_CLIENTID}\"}}" https://${VAULT_HOSTNAME}/v1/kubrix-kv/data/portal/backstage/base
+          kubectl delete secret -n backstage sx-cnp-secret
+          kubectl delete externalsecret -n backstage sx-cnp-secret
+          kubectl rollout restart deployment -n backstage sx-backstage
+          kubectl rollout status deployment -n backstage sx-backstage
+
+      # run testkube tests
+      - uses: kubeshop/setup-testkube@v1
+        with:
+          version: 2.4.4
+    
+      - name: testkube tests
+        env:
+          KUBRIX_TARGET_TYPE: ${{ matrix.target-type }}
+          E2E_TEST_GH_USERNAME: ${{ secrets.E2E_TEST_GH_USERNAME }}
+          E2E_TEST_GH_PASSWORD: ${{ secrets.E2E_TEST_GH_PASSWORD }}
+          E2E_TEST_GITHUB_OTP: ${{ secrets.E2E_TEST_GITHUB_OTP }}
+          E2E_KUBRIX_ARGOCD_APPSET_TOKEN: ${{ secrets.E2E_KUBRIX_ARGOCD_APPSET_TOKEN }}
+          E2E_KUBRIX_KARGO_GIT_PASSWORD: ${{ secrets.E2E_KUBRIX_KARGO_GIT_PASSWORD }}
+        run: |
+          E2E_KEYCLOAK_DEMOADMIN_PASSWORD=$( kubectl get secret -n keycloak cp-keycloak-users-secret -o=jsonpath='{.data.demoadmin}'  | base64 -d )
+          E2E_KEYCLOAK_DEMOUSER_PASSWORD=$( kubectl get secret -n keycloak cp-keycloak-users-secret -o=jsonpath='{.data.demouser}'  | base64 -d )
+          E2E_ARGOCD_ADMIN_PASSWORD=$( kubectl get secret -n argocd argocd-initial-admin-secret -o=jsonpath={'.data.password'} | base64 -d )
+          E2E_ARGOCD_VERSION="v3.2.3+2b6251d"
+          E2E_GRAFANA_ADMIN_PASSWORD=$( kubectl get secret -n grafana grafana-admin-secret -o=jsonpath='{.data.passwordKey}' | base64 -d )
+          E2E_KEYCLOAK_ADMIN_PASSWORD=$( kubectl get secret -n keycloak keycloak-admin -o=jsonpath='{.data.admin-password}' | base64 -d )
+          E2E_VAULT_ROOT_TOKEN=$( kubectl get secret -n vault vault-init -o jsonpath='{.data.root_token}' | base64 -d )
+          E2E_KARGO_ADMIN_PASSWORD=$( kubectl get secret -n kargo kargo-admin-secret  -o=jsonpath='{.data.ADMIN_ACCOUNT_PASSWORD}'  | base64 -d )
+          E2E_KARGO_VERSION="v1.8.4"
+          testkube run testworkflow -l type=${KUBRIX_TARGET_TYPE} \
+            --variable E2E_TEST_GH_USERNAME=${E2E_TEST_GH_USERNAME} \
+            --variable E2E_TEST_GH_PASSWORD=${E2E_TEST_GH_PASSWORD} \
+            --variable E2E_TEST_GITHUB_OTP=${E2E_TEST_GITHUB_OTP} \
+            --variable E2E_KEYCLOAK_DEMOADMIN_PASSWORD=${E2E_KEYCLOAK_DEMOADMIN_PASSWORD} \
+            --variable E2E_KEYCLOAK_DEMOUSER_PASSWORD=${E2E_KEYCLOAK_DEMOUSER_PASSWORD} \
+            --variable E2E_ARGOCD_ADMIN_PASSWORD=${E2E_ARGOCD_ADMIN_PASSWORD} \
+            --variable E2E_ARGOCD_VERSION=${E2E_ARGOCD_VERSION} \
+            --variable E2E_GRAFANA_ADMIN_PASSWORD=${E2E_GRAFANA_ADMIN_PASSWORD} \
+            --variable E2E_KEYCLOAK_ADMIN_PASSWORD=${E2E_KEYCLOAK_ADMIN_PASSWORD} \
+            --variable E2E_VAULT_ROOT_TOKEN=${E2E_VAULT_ROOT_TOKEN} \
+            --variable E2E_KARGO_ADMIN_PASSWORD=${E2E_KARGO_ADMIN_PASSWORD} \
+            --variable E2E_KARGO_VERSION=${E2E_KARGO_VERSION} \
+            --variable E2E_KUBRIX_ARGOCD_APPSET_TOKEN=${E2E_KUBRIX_ARGOCD_APPSET_TOKEN} \
+            --variable E2E_KUBRIX_KARGO_GIT_PASSWORD=${E2E_KUBRIX_KARGO_GIT_PASSWORD} \
+            -f -d
+
+      - name: Password protect Playwright traces
+        if: always()
+        shell: bash
+        env:
+          E2E_ARTIFACT_PASSWORD: ${{ secrets.E2E_ARTIFACT_PASSWORD }}
+        run: zip -rP ${E2E_ARTIFACT_PASSWORD} ./playwright-artifacts.zip ./artifacts
+
+      - uses: actions/upload-artifact@v6
+        if: always()
+        with:
+          name: testkube-artifacts-${{ matrix.target-type }}
+          path: ./playwright-artifacts.zip
+          
+      - name: mustgather data for troubleshooting
+        if: ${{ failure() }}
+        shell: bash
+        run: |
+          echo "===== node describe ======"
+          kubectl describe node kubrix-cluster-control-plane
+          echo "===== node top  ======"
+          kubectl top node
+          echo "===== node yaml ======"
+          kubectl get nodes -o yaml
+          echo "===== yaml output of all applications ======"
+          kubectl get application -n argocd -o yaml
+          echo "===== crossplane managed ======"
+          kubectl get managed
+          kubectl get managed -o yaml
+          kubectl get pkg
+          kubectl get pkg -o yaml 
+          echo "===== external secrets ======"
+          kubectl get externalsecret -A
+          kubectl get externalsecret -A -o yaml
+
+      - name: mustgather logs for troubleshooting
+        if: ${{ failure() }}
+        shell: bash
+        run: |
+          kubectl logs -n argocd statefulset/sx-argocd-application-controller
+          kubectl logs -n argocd deployment/sx-argocd-repo-server
+          kubectl logs -n argocd deployment/sx-argocd-applicationset-controller
+          kubectl get pods -o name -n crossplane | xargs -I {} kubectl logs -n crossplane {} --all-containers=true

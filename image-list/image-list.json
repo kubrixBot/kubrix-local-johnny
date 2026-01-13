@@ -1,0 +1,467 @@
+[
+  {
+    "chart": "argo-rollouts",
+    "image": "quay.io/argoproj/argo-rollouts:v1.8.3",
+    "id": "argo-rollouts_argo-rollouts_v1.8.3"
+  },
+  {
+    "chart": "argocd",
+    "image": "ecr-public.aws.com/docker/library/redis:7.2.11-alpine",
+    "id": "argocd_redis_7.2.11-alpine"
+  },
+  {
+    "chart": "argocd",
+    "image": "ghcr.io/dexidp/dex:v2.44.0",
+    "id": "argocd_dex_v2.44.0"
+  },
+  {
+    "chart": "argocd",
+    "image": "quay.io/argoproj/argocd:v3.1.8",
+    "id": "argocd_argocd_v3.1.8"
+  },
+  {
+    "chart": "backstage",
+    "image": "alpine:3.17",
+    "id": "backstage_alpine_3.17"
+  },
+  {
+    "chart": "backstage",
+    "image": "ghcr.io/suxess-it/sx-backstage:v1.43.3",
+    "id": "backstage_sx-backstage_v1.43.3"
+  },
+  {
+    "chart": "cert-manager",
+    "image": "quay.io/jetstack/cert-manager-acmesolver:v1.19.1",
+    "id": "cert-manager_cert-manager-acmesolver_v1.19.1"
+  },
+  {
+    "chart": "cert-manager",
+    "image": "quay.io/jetstack/cert-manager-cainjector:v1.19.1",
+    "id": "cert-manager_cert-manager-cainjector_v1.19.1"
+  },
+  {
+    "chart": "cert-manager",
+    "image": "quay.io/jetstack/cert-manager-controller:v1.19.1",
+    "id": "cert-manager_cert-manager-controller_v1.19.1"
+  },
+  {
+    "chart": "cert-manager",
+    "image": "quay.io/jetstack/cert-manager-startupapicheck:v1.19.1",
+    "id": "cert-manager_cert-manager-startupapicheck_v1.19.1"
+  },
+  {
+    "chart": "cert-manager",
+    "image": "quay.io/jetstack/cert-manager-webhook:v1.19.1",
+    "id": "cert-manager_cert-manager-webhook_v1.19.1"
+  },
+  {
+    "chart": "cnpg",
+    "image": "ghcr.io/cloudnative-pg/cloudnative-pg:1.27.1",
+    "id": "cnpg_cloudnative-pg_1.27.1"
+  },
+  {
+    "chart": "crossplane",
+    "image": "xpkg.crossplane.io/crossplane/crossplane:v2.1.1",
+    "id": "crossplane_crossplane_v2.1.1"
+  },
+  {
+    "chart": "external-dns",
+    "image": "registry.k8s.io/external-dns/external-dns:v0.19.0",
+    "id": "external-dns_external-dns_v0.19.0"
+  },
+  {
+    "chart": "external-secrets",
+    "image": "oci.external-secrets.io/external-secrets/external-secrets:v1.0.0",
+    "id": "external-secrets_external-secrets_v1.0.0"
+  },
+  {
+    "chart": "falco",
+    "image": "appropriate/curl",
+    "id": "falco_curl"
+  },
+  {
+    "chart": "falco",
+    "image": "busybox",
+    "id": "falco_busybox"
+  },
+  {
+    "chart": "falco",
+    "image": "docker.io/falcosecurity/falco-exporter:0.8.3",
+    "id": "falco_falco-exporter_0.8.3"
+  },
+  {
+    "chart": "falco",
+    "image": "docker.io/falcosecurity/falco:0.41.0-debian",
+    "id": "falco_falco_0.41.0-debian"
+  },
+  {
+    "chart": "falco",
+    "image": "docker.io/falcosecurity/falcoctl:0.11.0",
+    "id": "falco_falcoctl_0.11.0"
+  },
+  {
+    "chart": "falco",
+    "image": "docker.io/falcosecurity/falcosidekick-ui:2.2.0",
+    "id": "falco_falcosidekick-ui_2.2.0"
+  },
+  {
+    "chart": "falco",
+    "image": "docker.io/falcosecurity/falcosidekick:2.31.1",
+    "id": "falco_falcosidekick_2.31.1"
+  },
+  {
+    "chart": "falco",
+    "image": "docker.io/falcosecurity/k8s-metacollector:0.1.1",
+    "id": "falco_k8s-metacollector_0.1.1"
+  },
+  {
+    "chart": "falco",
+    "image": "docker.io/redis/redis-stack:7.2.0-v11",
+    "id": "falco_redis-stack_7.2.0-v11"
+  },
+  {
+    "chart": "grafana",
+    "image": "docker.io/bats/bats:v1.4.1",
+    "id": "grafana_bats_v1.4.1"
+  },
+  {
+    "chart": "grafana",
+    "image": "docker.io/grafana/grafana:12.2.1",
+    "id": "grafana_grafana_12.2.1"
+  },
+  {
+    "chart": "grafana",
+    "image": "docker.io/library/busybox:1.31.1",
+    "id": "grafana_busybox_1.31.1"
+  },
+  {
+    "chart": "grafana",
+    "image": "quay.io/kiwigrid/k8s-sidecar:1.30.10",
+    "id": "grafana_k8s-sidecar_1.30.10"
+  },
+  {
+    "chart": "ingress-nginx",
+    "image": "registry.k8s.io/ingress-nginx/controller:v1.14.0@sha256:e4127065d0317bd11dc64c4dd38dcf7fb1c3d72e468110b4086e636dbaac943d",
+    "id": "ingress-nginx_controller_v1.14.0@sha256_e4127065d0317bd11dc64c4dd38dcf7fb1c3d72e468110b4086e636dbaac943d"
+  },
+  {
+    "chart": "ingress-nginx",
+    "image": "registry.k8s.io/ingress-nginx/kube-webhook-certgen:v1.6.4@sha256:bcfc926ed57831edf102d62c5c0e259572591df4796ef1420b87f9cf6092497f",
+    "id": "ingress-nginx_kube-webhook-certgen_v1.6.4@sha256_bcfc926ed57831edf102d62c5c0e259572591df4796ef1420b87f9cf6092497f"
+  },
+  {
+    "chart": "k8s-monitoring",
+    "image": "ghcr.io/grafana/alloy-operator:1.4.0",
+    "id": "k8s-monitoring_alloy-operator_1.4.0"
+  },
+  {
+    "chart": "k8s-monitoring",
+    "image": "ghcr.io/grafana/helm-chart-toolbox-kubectl:0.1.1",
+    "id": "k8s-monitoring_helm-chart-toolbox-kubectl_0.1.1"
+  },
+  {
+    "chart": "k8s-monitoring",
+    "image": "quay.io/prometheus/node-exporter:v1.10.2",
+    "id": "k8s-monitoring_node-exporter_v1.10.2"
+  },
+  {
+    "chart": "k8s-monitoring",
+    "image": "registry.k8s.io/kube-state-metrics/kube-state-metrics:v2.17.0",
+    "id": "k8s-monitoring_kube-state-metrics_v2.17.0"
+  },
+  {
+    "chart": "kargo",
+    "image": "ghcr.io/akuity/kargo:v1.8.3",
+    "id": "kargo_kargo_v1.8.3"
+  },
+  {
+    "chart": "keycloak",
+    "image": "alpine:3.17",
+    "id": "keycloak_alpine_3.17"
+  },
+  {
+    "chart": "keycloak",
+    "image": "curlimages/curl:latest",
+    "id": "keycloak_curl_latest"
+  },
+  {
+    "chart": "keycloak",
+    "image": "quay.io/keycloak/keycloak-operator:26.3.2",
+    "id": "keycloak_keycloak-operator_26.3.2"
+  },
+  {
+    "chart": "komoplane",
+    "image": "busybox",
+    "id": "komoplane_busybox"
+  },
+  {
+    "chart": "komoplane",
+    "image": "komodorio/komoplane:0.1.6",
+    "id": "komoplane_komoplane_0.1.6"
+  },
+  {
+    "chart": "kubecost",
+    "image": "badouralix/curl-jq:alpine",
+    "id": "kubecost_curl-jq_alpine"
+  },
+  {
+    "chart": "kubecost",
+    "image": "gcr.io/kubecost1/cost-model:prod-2.9.3",
+    "id": "kubecost_cost-model_prod-2.9.3"
+  },
+  {
+    "chart": "kubecost",
+    "image": "gcr.io/kubecost1/frontend:prod-2.9.3",
+    "id": "kubecost_frontend_prod-2.9.3"
+  },
+  {
+    "chart": "kubecost",
+    "image": "gcr.io/kubecost1/kubecost-modeling:v0.1.31",
+    "id": "kubecost_kubecost-modeling_v0.1.31"
+  },
+  {
+    "chart": "kubecost",
+    "image": "icr.io/ibm-finops/agent:v1.0.3",
+    "id": "kubecost_agent_v1.0.3"
+  },
+  {
+    "chart": "kubecost",
+    "image": "quay.io/prometheus/prometheus:v3.7.2",
+    "id": "kubecost_prometheus_v3.7.2"
+  },
+  {
+    "chart": "kubevirt-manager",
+    "image": "kubevirtmanager/kubevirt-manager:1.5.0",
+    "id": "kubevirt-manager_kubevirt-manager_1.5.0"
+  },
+  {
+    "chart": "kubevirt",
+    "image": "quay.io/kubevirt/cdi-operator:v1.62.0",
+    "id": "kubevirt_cdi-operator_v1.62.0"
+  },
+  {
+    "chart": "kubevirt",
+    "image": "quay.io/kubevirt/virt-operator:v1.5.0",
+    "id": "kubevirt_virt-operator_v1.5.0"
+  },
+  {
+    "chart": "kyverno",
+    "image": "curlimages/curl:8.10.1",
+    "id": "kyverno_curl_8.10.1"
+  },
+  {
+    "chart": "kyverno",
+    "image": "reg.kyverno.io/kyverno/background-controller:v1.16.0",
+    "id": "kyverno_background-controller_v1.16.0"
+  },
+  {
+    "chart": "kyverno",
+    "image": "reg.kyverno.io/kyverno/cleanup-controller:v1.16.0",
+    "id": "kyverno_cleanup-controller_v1.16.0"
+  },
+  {
+    "chart": "kyverno",
+    "image": "reg.kyverno.io/kyverno/kyverno-cli:v1.16.0",
+    "id": "kyverno_kyverno-cli_v1.16.0"
+  },
+  {
+    "chart": "kyverno",
+    "image": "reg.kyverno.io/kyverno/kyverno:v1.16.0",
+    "id": "kyverno_kyverno_v1.16.0"
+  },
+  {
+    "chart": "kyverno",
+    "image": "reg.kyverno.io/kyverno/kyvernopre:v1.16.0",
+    "id": "kyverno_kyvernopre_v1.16.0"
+  },
+  {
+    "chart": "kyverno",
+    "image": "reg.kyverno.io/kyverno/reports-controller:v1.16.0",
+    "id": "kyverno_reports-controller_v1.16.0"
+  },
+  {
+    "chart": "kyverno",
+    "image": "registry.k8s.io/kubectl:v1.32.7",
+    "id": "kyverno_kubectl_v1.32.7"
+  },
+  {
+    "chart": "loki",
+    "image": "docker.io/grafana/loki-canary:3.5.7",
+    "id": "loki_loki-canary_3.5.7"
+  },
+  {
+    "chart": "loki",
+    "image": "docker.io/grafana/loki-helm-test:latest",
+    "id": "loki_loki-helm-test_latest"
+  },
+  {
+    "chart": "loki",
+    "image": "docker.io/grafana/loki:3.5.7",
+    "id": "loki_loki_3.5.7"
+  },
+  {
+    "chart": "loki",
+    "image": "docker.io/kiwigrid/k8s-sidecar:1.30.10",
+    "id": "loki_k8s-sidecar_1.30.10"
+  },
+  {
+    "chart": "loki",
+    "image": "docker.io/nginxinc/nginx-unprivileged:1.29-alpine",
+    "id": "loki_nginx-unprivileged_1.29-alpine"
+  },
+  {
+    "chart": "loki",
+    "image": "memcached:1.6.39-alpine",
+    "id": "loki_memcached_1.6.39-alpine"
+  },
+  {
+    "chart": "loki",
+    "image": "prom/memcached-exporter:v0.15.3",
+    "id": "loki_memcached-exporter_v0.15.3"
+  },
+  {
+    "chart": "loki",
+    "image": "quay.io/minio/mc:RELEASE.2024-11-21T17-21-54Z",
+    "id": "loki_mc_RELEASE.2024-11-21T17-21-54Z"
+  },
+  {
+    "chart": "loki",
+    "image": "quay.io/minio/minio:RELEASE.2024-12-18T13-15-44Z",
+    "id": "loki_minio_RELEASE.2024-12-18T13-15-44Z"
+  },
+  {
+    "chart": "metallb",
+    "image": "quay.io/frrouting/frr:9.1.0",
+    "id": "metallb_frr_9.1.0"
+  },
+  {
+    "chart": "metallb",
+    "image": "quay.io/metallb/controller:v0.15.2",
+    "id": "metallb_controller_v0.15.2"
+  },
+  {
+    "chart": "metallb",
+    "image": "quay.io/metallb/speaker:v0.15.2",
+    "id": "metallb_speaker_v0.15.2"
+  },
+  {
+    "chart": "mimir",
+    "image": "docker.io/nginxinc/nginx-unprivileged:1.29-alpine",
+    "id": "mimir_nginx-unprivileged_1.29-alpine"
+  },
+  {
+    "chart": "mimir",
+    "image": "grafana/mimir:3.0.0",
+    "id": "mimir_mimir_3.0.0"
+  },
+  {
+    "chart": "mimir",
+    "image": "grafana/rollout-operator:v0.32.0",
+    "id": "mimir_rollout-operator_v0.32.0"
+  },
+  {
+    "chart": "mimir",
+    "image": "quay.io/minio/mc:RELEASE.2024-11-21T17-21-54Z",
+    "id": "mimir_mc_RELEASE.2024-11-21T17-21-54Z"
+  },
+  {
+    "chart": "mimir",
+    "image": "quay.io/minio/minio:RELEASE.2024-12-18T13-15-44Z",
+    "id": "mimir_minio_RELEASE.2024-12-18T13-15-44Z"
+  },
+  {
+    "chart": "minio",
+    "image": "quay.io/minio/mc:RELEASE.2024-11-21T17-21-54Z",
+    "id": "minio_mc_RELEASE.2024-11-21T17-21-54Z"
+  },
+  {
+    "chart": "minio",
+    "image": "quay.io/minio/minio:RELEASE.2024-12-18T13-15-44Z",
+    "id": "minio_minio_RELEASE.2024-12-18T13-15-44Z"
+  },
+  {
+    "chart": "tempo",
+    "image": "grafana/tempo:2.9.0",
+    "id": "tempo_tempo_2.9.0"
+  },
+  {
+    "chart": "testkube",
+    "image": "docker.io/kubeshop/testkube-api-server:2.4.0",
+    "id": "testkube_testkube-api-server_2.4.0"
+  },
+  {
+    "chart": "testkube",
+    "image": "docker.io/minio/minio:RELEASE.2025-06-13T11-33-47Z",
+    "id": "testkube_minio_RELEASE.2025-06-13T11-33-47Z"
+  },
+  {
+    "chart": "testkube",
+    "image": "nats:2.11.6-alpine",
+    "id": "testkube_nats_2.11.6-alpine"
+  },
+  {
+    "chart": "testkube",
+    "image": "natsio/nats-server-config-reloader:0.18.2",
+    "id": "testkube_nats-server-config-reloader_0.18.2"
+  },
+  {
+    "chart": "testkube",
+    "image": "us-east1-docker.pkg.dev/testkube-cloud-372110/testkube/mongodb:8.0.13",
+    "id": "testkube_mongodb_8.0.13"
+  },
+  {
+    "chart": "trivy",
+    "image": "mirror.gcr.io/aquasec/trivy-operator:0.29.0",
+    "id": "trivy_trivy-operator_0.29.0"
+  },
+  {
+    "chart": "vault",
+    "image": "alpine/curl:latest",
+    "id": "vault_curl_latest"
+  },
+  {
+    "chart": "vault",
+    "image": "hashicorp/vault:1.20.3",
+    "id": "vault_vault_1.20.3"
+  },
+  {
+    "chart": "vault",
+    "image": "hashicorp/vault:1.20.4",
+    "id": "vault_vault_1.20.4"
+  },
+  {
+    "chart": "velero-ui",
+    "image": "docker.io/dserio83/velero-api:0.3.1",
+    "id": "velero-ui_velero-api_0.3.1"
+  },
+  {
+    "chart": "velero-ui",
+    "image": "docker.io/dserio83/velero-ui:0.3.1",
+    "id": "velero-ui_velero-ui_0.3.1"
+  },
+  {
+    "chart": "velero-ui",
+    "image": "docker.io/dserio83/velero-watchdog:0.1.8",
+    "id": "velero-ui_velero-watchdog_0.1.8"
+  },
+  {
+    "chart": "velero",
+    "image": "bitnamilegacy/kubectl:1.33.4",
+    "id": "velero_kubectl_1.33.4"
+  },
+  {
+    "chart": "velero",
+    "image": "velero/velero-plugin-for-aws:v1.13.1",
+    "id": "velero_velero-plugin-for-aws_v1.13.1"
+  },
+  {
+    "chart": "velero",
+    "image": "velero/velero-plugin-for-microsoft-azure:v1.13.1",
+    "id": "velero_velero-plugin-for-microsoft-azure_v1.13.1"
+  },
+  {
+    "chart": "velero",
+    "image": "velero/velero:v1.17.0",
+    "id": "velero_velero_v1.17.0"
+  }
+]
