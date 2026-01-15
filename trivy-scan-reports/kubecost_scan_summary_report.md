@@ -1,5 +1,5 @@
 
-<h3>Target <code>badouralix/curl-jq:alpine (alpine 3.22.2)</code></h3>
+<h3>Target <code>badouralix/curl-jq:alpine (alpine 3.23.2)</code></h3>
 <h4>No Vulnerabilities found</h4>
 <h4>No Misconfigurations found</h4>
 
