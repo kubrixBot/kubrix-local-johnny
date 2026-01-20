@@ -51,7 +51,8 @@ spec:
             allowedHosts:
               - github.com
             allowedOwners:
-              - kubriX-demo
+              - suxess-it
+              - kubrix-demo
             requestUserCredentials:
               secretsKey: USER_OAUTH_TOKEN
               additionalScopes:
