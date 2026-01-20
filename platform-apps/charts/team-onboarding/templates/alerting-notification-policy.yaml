@@ -25,5 +25,5 @@ data:
     {{- end }}
   {{- end }}
 {{- else }}
-        routes: []
+          routes: []
 {{- end }}
